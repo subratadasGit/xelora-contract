@@ -6,7 +6,7 @@
  */
 pragma solidity 0.4.23;
 
-import "../zeppelin/contracts/token/ERC20/StandardToken.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
 import "./tokenmarket/UpgradeAgent.sol";
 import "./Recoverable.sol";
 
@@ -87,7 +87,7 @@ contract UpgradeableToken is StandardToken, Recoverable {
    * interface.
    * @param _upgradeAgent The address of the new UpgradeAgent smart contract
    */
-  function setUpgradeAgent(UpgradeAgent _upgradeAgent) external onlyOwner {
+  function setUpgradeAgent(UpgradeAgent _upgradeAgent) external onlyAllOwners {
     require(canUpgrade(), "Ensure the token is upgradeable in the first place");
     require(_upgradeAgent != address(0), "Ensure upgrade agent address is not blank");
     require(getUpgradeState() != UpgradeState.Upgrading, "Ensure upgrade has not started");

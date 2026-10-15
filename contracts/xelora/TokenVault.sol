@@ -1,17 +1,18 @@
 pragma solidity 0.4.23;
 
 import "./Recoverable.sol";
-import "../zeppelin/contracts/token/ERC20/ERC20Basic.sol";
-import "../zeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "../zeppelin/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 
 /**
  * @title TokenVault smart contract for validating and handling token distribution
  * and lockup.
  * @author Zachary Kilgore @ Xelora Technologies LLC
- * @dev TokenVault is Recoverable, which also means it is Ownable and the owner
- * can reclaim any errant tokens or ether that is sent to the contract.
+ * @dev TokenVault is Recoverable, so a quorum of owners can reclaim errant
+ * tokens or ether sent to the contract. The token being distributed is
+ * excluded from that: see canReclaimToken below.
  */
 contract TokenVault is Recoverable {
   using SafeMath for uint256;
@@ -125,7 +126,7 @@ contract TokenVault is Recoverable {
     uint256 _amount
   )
     external
-    onlyOwner
+    onlyAnyOwner
     vaultLoading
     returns(bool)
   {
@@ -147,7 +148,7 @@ contract TokenVault is Recoverable {
    * @dev Should be called after every allocation has been set.
    * @return true if the vault has been successfully locked
    */
-  function lock() external onlyOwner vaultLoading {
+  function lock() external onlyManyOwners vaultLoading {
     require(tokensAllocated == tokensToBeAllocated, "Expected to allocate all tokens");
     require(token.balanceOf(address(this)) == tokensAllocated, "Vault must own enough tokens to distribute");
 
@@ -162,7 +163,7 @@ contract TokenVault is Recoverable {
    * beneficiaries.
    * @dev Must be locked prior to unlocking. Also, the vestingPeriod must be up.
    */
-  function unlock() external onlyOwner vaultLocked {
+  function unlock() external onlyManyOwners vaultLocked {
     require(unlockedAt == 0, "Must not be unlocked yet");
     // solium-disable-next-line security/no-block-members
     require(block.timestamp >= lockedAt.add(vestingPeriod), "Lock up must be over");
@@ -194,12 +195,28 @@ contract TokenVault is Recoverable {
     address _beneficiary
   )
     public
-    onlyOwner
+    onlyAnyOwner
     vaultUnlocked
     returns(bool)
   {
     return _transferTokens(_beneficiary);
   }
+
+  /**
+   * @notice Whether a token may be rescued from this vault.
+   * @dev Hardening added alongside the Multiownable change. The inherited
+   * rescue function moves an entire token balance, and this vault holds the
+   * managed token on behalf of its beneficiaries. Without this override, a
+   * quorum of owners could empty the vault of the very tokens it exists to
+   * distribute, which the original single-owner version also allowed.
+   * Unrelated tokens sent here by mistake can still be recovered.
+   * @param _token The token being considered for rescue
+   * @return true if the token may be reclaimed
+   */
+  function canReclaimToken(ERC20Basic _token) public view returns(bool) {
+    return address(_token) != address(token);
+  }
+
 
   /****************
    *** Internal ***

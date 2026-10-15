@@ -1,8 +1,7 @@
 pragma solidity 0.4.23;
 
-import "../zeppelin/contracts/token/ERC20/PausableToken.sol";
+import "./MultiownablePausableToken.sol";
 import "./UpgradeableToken.sol";
-import "./Recoverable.sol";
 
 
 /**
@@ -11,15 +10,17 @@ import "./Recoverable.sol";
  * @dev XeloraCoin is a standard ERC20 token that has the following additional
  * properties:
  *
- * - Upgradeable: Allows for the token to be upgraded to a new contract.
- * - Claimable: Owned contract where the transfer of ownership must be claimed
- * by the new owner prior to the old owner being removed.
- * - Recoverable: Owned contract that allows the owner to recover ether and tokens
- * sent to the contract in error that would otherwise be trapped.
- * - Pauseable: Owned contract that allows the ERC20 functionality (transfer,
- * approval, etc) to be paused and unpaused by the owner in case of emergency.
+ * - Upgradeable: Allows for the token to be upgraded to a new contract. Setting
+ * the upgrade agent requires every owner to agree.
+ * - Multiownable: Privileged actions are controlled by a set of owners, with
+ * the number of owners required chosen per action according to how much damage
+ * that action could do. This replaces the previous single-owner model.
+ * - Recoverable: Allows a quorum of owners to recover ether and tokens sent to
+ * the contract in error that would otherwise be trapped.
+ * - Pauseable: Allows ERC20 functionality (transfer, approval, etc) to be
+ * paused by any single owner in an emergency, and unpaused only by a quorum.
  */
-contract XeloraCoin is PausableToken, UpgradeableToken {
+contract XeloraCoin is MultiownablePausableToken, UpgradeableToken {
 
   string public constant name = "XeloraCoin";
   string public constant symbol = "FXC";

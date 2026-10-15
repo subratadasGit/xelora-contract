@@ -1,0 +1,17 @@
+{
+  "name": "xelora-contract",
+  "version": "1.0.0",
+  "description": "XeloraCoin token suite with Multiownable (M-of-N) access control",
+  "private": true,
+  "scripts": {
+    "build": "hardhat compile"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.7",
+    "@nomicfoundation/hardhat-ethers": "^3.0.6",
+    "chai": "^4.4.1",
+    "ethers": "^6.13.2",
+    "hardhat": "^2.22.10",
+    "openzeppelin-solidity": "^1.10.0"
+  }
+}
